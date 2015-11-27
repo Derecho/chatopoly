@@ -1,4 +1,5 @@
 import logging
+import chatopoly
 
 class ChatopolyPlugin(object):
     logger = None
@@ -6,6 +7,7 @@ class ChatopolyPlugin(object):
     def __init__(self, cardinal, config):
         self.logger = logging.getLogger(__name__)
         self._connect_or_create_db(cardinal)
+        self.game = chatopoly.Game()
         self.logger.info("Chatopoly started")
 
     def _connect_or_create_db(self, cardinal):

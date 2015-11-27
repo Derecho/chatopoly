@@ -1,14 +1,28 @@
+import jsonpickle
+
+from player import *
+from board import *
+
 class Game(object):
     def __init__(self):
         self.players = []
+        self.board = Board()
+
+    @staticmethod
+    def from_savedata(savedata):
+        obj = jsonpickle.decode(savedata)
+        if isinstance(obj, Game):
+            return obj
+        return None
+
+    def to_savedata(self):
+        return jsonpickle.encode(self)
 
     def add_player(self, nick):
-        # TODO Player objects
-        if nick not in self.players:
-            self.players.append(nick)
+        if nick not in self.get_player_nicks():
+            self.players.append(Player(nick))
             return True
         return False
 
     def get_player_nicks(self):
-        # TODO Player objects
-        return [nick for nick in self.players]
+        return [player.nick for player in self.players]

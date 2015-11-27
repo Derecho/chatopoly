@@ -1,8 +1,9 @@
 import logging
 import sqlite3
 import os
-import chatopoly
 from enum import Enum
+
+import chatopoly
 
 ChatopolyState = Enum('ChatopolyState', 'IDLE STARTING INPROGRESS')
 

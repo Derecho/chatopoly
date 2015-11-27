@@ -81,7 +81,7 @@ class Railroad(Property):
     """Railroads are simple properties that have deterministic rent based on
     the amount of railroads the owner possesses"""
     def __init__(self, name):
-        super(Railroad, self).__init__(name, RR_PRICE)
+        super(Railroad, self).__init__("{} Railroad".format(name), RR_PRICE)
 
     def rent(self):
         total_rr = 0
@@ -106,4 +106,61 @@ class Utility(Property):
         multiplier = UTIL_MUL_DUO if (total_util == 2) else UTIL_MUL_SOLO
         return (multiplier * self.owner.last_roll)
 
-# TODO Start, Jail, Free Parking, Go To Jail
+class Special(Tile):
+    """(Abstract) Special tiles are tiles with customisable behaviour"""
+    def __init__(self, name):
+        super(Special, self).__init__(name)
+
+    def on_entry(self, player):
+        pass
+
+    def on_turn(self, player):
+        pass
+
+class Go(Special):
+    def __init__(self):
+        super(Start, self).__init__("Go")
+
+class Jail(Special):
+    def __init__(self):
+        super(Start, self).__init__("Jail")
+
+    def on_turn(self, player):
+        # TODO Visting/Jailed logic
+        pass
+
+class FreeParking(Special):
+    def __init__(self):
+        super(Start, self).__init__("Free Parking")
+
+class GoToJail(Special):
+    def __init__(self):
+        super(Start, self).__init__("Go To Jail")
+
+    def on_entry(self, player):
+        # TODO Put player in jail
+        pass
+
+class CommunityChest(Special):
+    def __init__(self, number):
+        super(CommunityChest, self).__init__("Community Chest {}".format(number))
+
+    def on_entry(self, player):
+        # TODO Pick card and process effect
+        pass
+
+class Chance(Special):
+    def __init__(self, number):
+        super(CommunityChest, self).__init__("Chance {}".format(number))
+
+    def on_entry(self, player):
+        # TODO Pick card and process effect
+        pass
+
+class IncomeTax(Special):
+    def __init__(self):
+        super(IncomeTax, self).__init__("Income Tax")
+
+    def on_entry(self, player):
+        # TODO 10% or $200
+        pass

@@ -1,6 +1,8 @@
+# -*- coding: utf-8 -*-
 import logging
 import sqlite3
 import os
+import random
 from enum import Enum
 
 import chatopoly
@@ -14,6 +16,7 @@ class ChatopolyPlugin(object):
         self.logger = logging.getLogger(__name__)
         self._connect_or_create_db(cardinal)
 
+        self.config = config
         self.state = ChatopolyState.IDLE
         self.game = None
 
@@ -102,13 +105,41 @@ class ChatopolyPlugin(object):
         self.logger.info("Started new game with players: {}".format(
             " ".join(self.game.get_player_nicks())))
 
-        # TODO Actually start the game
+        if self.config is not None:
+            if self.config['board_variant']:
+                self.game.prepare_board(config['board_variant'])
+
+        if self.game.board == None:
+            self.game.prepare_board('uk')
+
+        self.game.currentplayer = random.randint(0, len(self.game.players)-1)
+        cardinal.sendMsg(channel, "Game started, {} starts.".format(
+            self.game.players[self.game.currentplayer].nick))
+
     start.commands = ['start']
 
     def roll(self, cardinal, user, channel, msg):
-        # TODO Replace stub
         nick, ident, vhost = user.group(1), user.group(2), user.group(3)
-        cardinal.sendMsg(channel, "user: {}, channel: {}, message {}".format(nick, channel, msg))
+        if nick == channel:
+            cardinal.sendMsg(channel, "This is a channel command.")
+            return
+
+        if self.state != ChatopolyState.INPROGRESS:
+            cardinal.sendMsg(channel, "{}: No game is running at the "
+            "moment.".format(nick))
+            return
+
+        if nick not in [player.nick for player in self.game.players]:
+            return
+
+        currentplayer = self.game.players[self.game.currentplayer]
+        if nick != currentplayer.nick:
+            cardinal.sendMsg(channel, "{}: It is {}'s turn.".format(nick,
+                currentplayer.nick))
+            return
+
+        for line in self.game.roll():
+            cardinal.sendMsg(channel, line)
 
     roll.commands = ['roll', 'r']
     roll.help = ["Roll the dice"]

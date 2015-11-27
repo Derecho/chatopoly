@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 RR_PRICE = 200
 RR_BASE_RENT = 25
 UTIL_PRICE = 150
@@ -119,11 +120,11 @@ class Special(Tile):
 
 class Go(Special):
     def __init__(self):
-        super(Start, self).__init__("Go")
+        super(Go, self).__init__("Go")
 
 class Jail(Special):
     def __init__(self):
-        super(Start, self).__init__("Jail")
+        super(Jail, self).__init__("Jail")
 
     def on_turn(self, player):
         # TODO Visting/Jailed logic
@@ -131,11 +132,11 @@ class Jail(Special):
 
 class FreeParking(Special):
     def __init__(self):
-        super(Start, self).__init__("Free Parking")
+        super(FreeParking, self).__init__("Free Parking")
 
 class GoToJail(Special):
     def __init__(self):
-        super(Start, self).__init__("Go To Jail")
+        super(Special, self).__init__("Go To Jail")
 
     def on_entry(self, player):
         # TODO Put player in jail
@@ -151,7 +152,7 @@ class CommunityChest(Special):
 
 class Chance(Special):
     def __init__(self, number):
-        super(CommunityChest, self).__init__("Chance {}".format(number))
+        super(Chance, self).__init__("Chance {}".format(number))
 
     def on_entry(self, player):
         # TODO Pick card and process effect

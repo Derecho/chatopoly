@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 class Player(object):
     def __init__(self, nick):
         self.nick = nick
@@ -5,3 +6,4 @@ class Player(object):
         self.properties = []
         self.jailcard = False
         self.last_roll = 0
+        self.position = 0

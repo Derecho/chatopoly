@@ -1,12 +1,19 @@
+# -*- coding: utf-8 -*-
 from tile import *
 
 class Board(object):
-    def __init__(self):
+    def __init__(self, players):
         self.tiles = []
+        self.players = {}
+        self.cursymbol = "$"
+        
+        for i in range(len(players)):
+            self.players[players[i]] = i
 
 class UKBoard(Board):
-    def __init__(self):
-        super(UKBoard, self).__init__()
+    def __init__(self, players):
+        super(UKBoard, self).__init__(players)
+        self.cursymbol = "£"
         self.tiles.append(Go())
         self.tiles.append(Street("Mediteranean Avenue (P)",
             60, [2, 10, 30, 90, 160, 250]))

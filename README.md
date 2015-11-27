@@ -13,3 +13,7 @@ In Cardinal's config.json, you'll need to add `chatopoly` under `plugins`.
 You may also find it handy to remove most of the other plugins to stop them
 from being loaded and interfering with the game. `admin` and `help` are useful
 plugins to keep.
+
+## Acknowledgements
+This game is heavily inspired by the rules and behaviour of the `monop` game
+that is part of `bsd-games`.

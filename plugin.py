@@ -139,7 +139,7 @@ class ChatopolyPlugin(object):
             return
 
         if self.state == ChatopolyState.INTERACTIVE:
-            output = self.game.interactive_cb('roll', msg)
+            output = self.game.interactive_cb('roll', msg.split(' '))
         else:
             output = self.game.roll()
 
@@ -160,6 +160,10 @@ class ChatopolyPlugin(object):
         self._interactive_cmd('no', cardinal, user, channel, msg)
     no.commands = ['no', 'n']
 
+    def pay(self, cardinal, user, channel, msg):
+        self._interactive_cmd('pay', cardinal, user, channel, msg)
+    pay.commands = ['pay']
+
     def _interactive_cmd(self, cmd, cardinal, user, channel, msg):
         nick, ident, vhost = user.group(1), user.group(2), user.group(3)
         if nick == channel:
@@ -178,7 +182,7 @@ class ChatopolyPlugin(object):
             cardinal.sendMsg(channel, "{}: Not a valid command.".format(nick))
             return
 
-        output = self.game.interactive_cb(cmd, msg)
+        output = self.game.interactive_cb(cmd, msg.split(' '))
 
         for line in output:
             cardinal.sendMsg(channel, line)

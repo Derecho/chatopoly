@@ -6,6 +6,8 @@ UTIL_MUL_SOLO = 4
 UTIL_MUL_DUO = 10
 MORT_MUL = 0.5
 MORT_LOSS = 0.1
+LUXTAX_PRCT = 10
+LUXTAX_FLAT = 200
 
 class Tile(object):
     """(Abstract) Any sort of tile that a player could stand on"""
@@ -112,10 +114,10 @@ class Special(Tile):
     def __init__(self, name):
         super(Special, self).__init__(name)
 
-    def on_entry(self, player):
+    def on_entry(self, game):
         pass
 
-    def on_turn(self, player):
+    def on_turn(self, game):
         pass
 
 class Go(Special):
@@ -126,7 +128,7 @@ class Jail(Special):
     def __init__(self):
         super(Jail, self).__init__("Jail")
 
-    def on_turn(self, player):
+    def on_turn(self, game):
         # TODO Visting/Jailed logic
         pass
 
@@ -138,7 +140,7 @@ class GoToJail(Special):
     def __init__(self):
         super(Special, self).__init__("Go To Jail")
 
-    def on_entry(self, player):
+    def on_entry(self, game):
         # TODO Put player in jail
         pass
 
@@ -146,7 +148,7 @@ class CommunityChest(Special):
     def __init__(self, number):
         super(CommunityChest, self).__init__("Community Chest {}".format(number))
 
-    def on_entry(self, player):
+    def on_entry(self, game):
         # TODO Pick card and process effect
         pass
 
@@ -154,14 +156,63 @@ class Chance(Special):
     def __init__(self, number):
         super(Chance, self).__init__("Chance {}".format(number))
 
-    def on_entry(self, player):
+    def on_entry(self, game):
         # TODO Pick card and process effect
         pass
 
 class IncomeTax(Special):
     def __init__(self):
         super(IncomeTax, self).__init__("Income Tax")
+        self.game = None
 
-    def on_entry(self, player):
-        # TODO 10% or $200
-        pass
+    def on_entry(self, game):
+        """Player arrived at Income Tax, prepare interactive session"""
+        msg = []
+        self.game = game
+        game.interactive_cb = self._choice_cb
+
+        msg =  ["Pay up, {}% of your total worth or {}{}?".format(
+            LUXTAX_PRCT,
+            game.board.cursymbol,
+            LUXTAX_FLAT)]
+        msg += ["(Enter 'pay {}%' or 'pay {}' command)".format(
+            LUXTAX_PRCT,
+            LUXTAX_FLAT)]
+
+        return msg
+
+    def _choice_cb(self, cmd, args):
+        """Callback handling payment of income tax"""
+        msg = []
+
+        if (cmd == 'pay') & (len(args) == 2):
+            if args[1] == "{}%".format(LUXTAX_PRCT):
+                current_player = self.game.get_current_player()
+                total = current_player.balance
+
+                for prop in current_player.properties:
+                    total += (prop.price - prop.unmortgage_cost())
+                # TODO Get out of jail free card?
+                # TODO Houses
+                tax = int((LUXTAX_PRCT/100.0) * total)
+                current_player.balance -= tax
+                msg += ["You pay: {}{} (UNFINISHED)".format(
+                    self.game.board.cursymbol,
+                    tax)]
+
+                self.game.interactive_cb = None
+
+            elif args[1] == "{}".format(LUXTAX_FLAT):
+                self.game.get_current_player().balance -= LUXTAX_FLAT
+                self.game.interactive_cb = None
+            
+        if self.game.interactive_cb == None:
+            msg += [self.game._next_player()]
+            self.game = None
+        else:
+            msg += ["Not a valid command. Your options are: 'pay {}%' and "
+                    "'pay {}'.".format(
+                LUXTAX_PRCT,
+                LUXTAX_FLAT)]
+
+        return msg

@@ -106,8 +106,9 @@ class Game(object):
                     self.board.cursymbol,
                     current_tile.rent())]
         elif isinstance(current_tile, Special):
-            # TODO User interaction and feedback
-            current_tile.on_entry(current_player)
+            on_entry_msg = current_tile.on_entry(self)
+            if on_entry_msg:
+                msg.extend(on_entry_msg)
         else:
             # TODO Invalid tile
             msg += ["ERROR: Invalid tile"]
@@ -120,6 +121,7 @@ class Game(object):
     def _next_player(self):
         """Gives turn to next player, returns according message"""
         self.current_player_id = (self.current_player_id + 1) % len(self.players)
+        # TODO on_turn of tile
         return "Turn goes to {} (at {} with {}{}).".format(
                 self.get_current_player().nick,
                 self.board.tiles[self.get_current_player().position].name,
@@ -147,7 +149,7 @@ class Game(object):
             msg += ["(Not implemented yet)"]
             self.interactive_cb = None
         else:
-            msg += ["Not a valid command. Your options are: yes/no."]
+            msg += ["Not a valid command. Your options are: 'yes' and 'no'."]
 
         if self.interactive_cb == None:
             msg += [self._next_player()]

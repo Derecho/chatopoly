@@ -15,6 +15,7 @@ class Game(object):
         self.board = None
         self.current_player_id = 0
         self.dice = []
+        self.interactive_cb = None
 
         for i in range(DICE_AMOUNT):
             self.dice += [0]
@@ -78,7 +79,7 @@ class Game(object):
 
         msg += ["{} rolls {}.".format(current_player.nick, rolldetails)]
 
-        if current_player.position > len(self.board.tiles):
+        if current_player.position >= len(self.board.tiles):
             msg += ["You have passed GO and collect {}{}.".format(
                 self.board.cursymbol,
                 GO_REWARD)]
@@ -91,8 +92,10 @@ class Game(object):
 
         if isinstance(current_tile, Property):
             if current_tile.owner == None:
-                # TODO Offer to buy property
-                pass
+                msg += ["Property is unowned. Would you like to purchase it for {}{}?".format(
+                    self.board.cursymbol,
+                    current_tile.price)]
+                self.interactive_cb = self._purchase_cb
             else:
                 # Property owned, pay rent
                 current_player.balance -= current_tile.rent()
@@ -109,7 +112,44 @@ class Game(object):
             # TODO Invalid tile
             msg += ["ERROR: Invalid tile"]
 
+        if self.interactive_cb == None:
+            msg += [self._next_player()]
+
+        return msg
+
+    def _next_player(self):
+        """Gives turn to next player, returns according message"""
         self.current_player_id = (self.current_player_id + 1) % len(self.players)
-        msg += ["Turn goes to {}".format(self.get_current_player().nick)]
+        return "Turn goes to {} (at {} with {}{}).".format(
+                self.get_current_player().nick,
+                self.board.tiles[self.get_current_player().position].name,
+                self.board.cursymbol,
+                self.get_current_player().balance)
+
+    def _purchase_cb(self, cmd, args):
+        """Callback handling property purchases"""
+        msg = []
+
+        if cmd == 'yes':
+            current_player = self.get_current_player()
+            current_tile = self.board.tiles[current_player.position]
+            current_player.balance -= current_tile.price
+            current_player.properties += [current_tile]
+            current_tile.owner = current_player
+            msg += ["{} has been purchased, you have {}{} left.".format(
+                current_tile.name,
+                self.board.cursymbol,
+                current_player.balance)]
+            self.interactive_cb = None
+        elif cmd == 'no':
+            # TODO Auction
+            msg += ["Property is going up for action."]
+            msg += ["(Not implemented yet)"]
+            self.interactive_cb = None
+        else:
+            msg += ["Not a valid command. Your options are: yes/no."]
+
+        if self.interactive_cb == None:
+            msg += [self._next_player()]
 
         return msg

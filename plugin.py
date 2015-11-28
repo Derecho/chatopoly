@@ -7,7 +7,7 @@ from enum import Enum
 
 import chatopoly
 
-ChatopolyState = Enum('ChatopolyState', 'IDLE STARTING INPROGRESS')
+ChatopolyState = Enum('ChatopolyState', 'IDLE STARTING INPROGRESS INTERACTIVE')
 
 class ChatopolyPlugin(object):
     logger = None
@@ -124,7 +124,8 @@ class ChatopolyPlugin(object):
             cardinal.sendMsg(channel, "This is a channel command.")
             return
 
-        if self.state != ChatopolyState.INPROGRESS:
+        if ((self.state == ChatopolyState.IDLE) |
+                (self.state == ChatopolyState.STARTING)):
             cardinal.sendMsg(channel, "{}: No game is running at the "
             "moment.".format(nick))
             return
@@ -137,11 +138,53 @@ class ChatopolyPlugin(object):
                 self.game.get_current_player().nick))
             return
 
-        for line in self.game.roll():
+        if self.state == ChatopolyState.INTERACTIVE:
+            output = self.game.interactive_cb('roll', msg)
+        else:
+            output = self.game.roll()
+
+        for line in output:
             cardinal.sendMsg(channel, line)
+
+        if self.game.interactive_cb:
+            self.state = ChatopolyState.INTERACTIVE
 
     roll.commands = ['roll', 'r']
     roll.help = ["Roll the dice"]
+
+    def yes(self, cardinal, user, channel, msg):
+        self._interactive_cmd('yes', cardinal, user, channel, msg)
+    yes.commands = ['yes', 'y']
+
+    def no(self, cardinal, user, channel, msg):
+        self._interactive_cmd('no', cardinal, user, channel, msg)
+    no.commands = ['no', 'n']
+
+    def _interactive_cmd(self, cmd, cardinal, user, channel, msg):
+        nick, ident, vhost = user.group(1), user.group(2), user.group(3)
+        if nick == channel:
+            cardinal.sendMsg(channel, "This is a channel command.")
+            return
+
+        if nick not in [player.nick for player in self.game.players]:
+            return
+
+        if nick != self.game.get_current_player().nick:
+            cardinal.sendMsg(channel, "{}: It is {}'s turn.".format(nick,
+                self.game.get_current_player().nick))
+            return
+
+        if self.state != ChatopolyState.INTERACTIVE:
+            cardinal.sendMsg(channel, "{}: Not a valid command.".format(nick))
+            return
+
+        output = self.game.interactive_cb(cmd, msg)
+
+        for line in output:
+            cardinal.sendMsg(channel, line)
+
+        if not self.game.interactive_cb:
+            self.state = ChatopolyState.INPROGRESS
 
 def setup(cardinal, config):
     return ChatopolyPlugin(cardinal, config)

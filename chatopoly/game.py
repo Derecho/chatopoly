@@ -96,15 +96,22 @@ class Game(object):
                     self.board.cursymbol,
                     current_tile.price)]
                 self.interactive_cb = self._purchase_cb
+            elif current_tile.owner == current_player:
+                msg += ["You own this property."]
             else:
-                # Property owned, pay rent
-                current_player.balance -= current_tile.rent()
-                current_tile.owner.balance += current_tile.rent()
-                msg += ["Property is owned by {}, {} pays {}{} rent.".format(
-                    current_tile.owner.nick,
-                    current_player.nick,
-                    self.board.cursymbol,
-                    current_tile.rent())]
+                msg += ["Property is owned by {}.".format(
+                    current_tile.owner.nick)]
+                if not current_tile.mortgaged:
+                    current_player.balance -= current_tile.rent()
+                    current_tile.owner.balance += current_tile.rent()
+                    msg += ["{} pays {}{} rent.".format(
+                        current_player.nick,
+                        self.board.cursymbol,
+                        current_tile.rent())]
+
+            if current_tile.mortgaged:
+                msg += ["Property is mortgaged."]
+
         elif isinstance(current_tile, Special):
             on_entry_msg = current_tile.on_entry(self)
             if on_entry_msg:

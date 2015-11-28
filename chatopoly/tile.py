@@ -207,7 +207,7 @@ class IncomeTax(Special):
                 self.game.interactive_cb = None
             
         if self.game.interactive_cb == None:
-            msg += [self.game._next_player()]
+            msg += [self.game._end_turn()]
             self.game = None
         else:
             msg += ["Not a valid command. Your options are: 'pay {}%' and "

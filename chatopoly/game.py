@@ -114,13 +114,14 @@ class Game(object):
             msg += ["ERROR: Invalid tile"]
 
         if self.interactive_cb == None:
-            msg += [self._next_player()]
+            msg += [self._end_turn()]
 
         return msg
 
-    def _next_player(self):
-        """Gives turn to next player, returns according message"""
+    def _end_turn(self):
+        """Gives turn to next player (unless in debt), returns according message"""
         self.current_player_id = (self.current_player_id + 1) % len(self.players)
+        # TODO Handle debt
         # TODO on_turn of tile
         return "Turn goes to {} (at {} with {}{}).".format(
                 self.get_current_player().nick,
@@ -152,6 +153,6 @@ class Game(object):
             msg += ["Not a valid command. Your options are: 'yes' and 'no'."]
 
         if self.interactive_cb == None:
-            msg += [self._next_player()]
+            msg += [self._end_turn()]
 
         return msg

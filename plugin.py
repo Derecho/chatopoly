@@ -112,9 +112,9 @@ class ChatopolyPlugin(object):
         if self.game.board == None:
             self.game.prepare_board('uk')
 
-        self.game.currentplayer = random.randint(0, len(self.game.players)-1)
+        self.game.current_player_id = random.randint(0, len(self.game.players)-1)
         cardinal.sendMsg(channel, "Game started, {} starts.".format(
-            self.game.players[self.game.currentplayer].nick))
+            self.game.get_current_player().nick))
 
     start.commands = ['start']
 
@@ -132,10 +132,9 @@ class ChatopolyPlugin(object):
         if nick not in [player.nick for player in self.game.players]:
             return
 
-        currentplayer = self.game.players[self.game.currentplayer]
-        if nick != currentplayer.nick:
+        if nick != self.game.get_current_player().nick:
             cardinal.sendMsg(channel, "{}: It is {}'s turn.".format(nick,
-                currentplayer.nick))
+                self.game.get_current_player().nick))
             return
 
         for line in self.game.roll():

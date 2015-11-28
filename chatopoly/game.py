@@ -77,7 +77,7 @@ class Game(object):
         current_player.last_dice = dicetotal
         current_player.position += dicetotal
 
-        msg += ["{} rolls {}.".format(current_player.nick, rolldetails)]
+        msg += ["You roll {}.".format(rolldetails)]
 
         if current_player.position >= len(self.board.tiles):
             msg += ["You have passed GO and collect {}{}.".format(
@@ -88,7 +88,7 @@ class Game(object):
 
         current_tile = self.board.tiles[current_player.position]
 
-        msg += ["{} moves to {}.".format(current_player.nick, current_tile.name)]
+        msg += ["You move to {}.".format(current_tile.name)]
 
         if isinstance(current_tile, Property):
             if current_tile.owner == None:
@@ -104,8 +104,7 @@ class Game(object):
                 if not current_tile.mortgaged:
                     current_player.balance -= current_tile.rent()
                     current_tile.owner.balance += current_tile.rent()
-                    msg += ["{} pays {}{} rent.".format(
-                        current_player.nick,
+                    msg += ["You pay {}{} rent.".format(
                         self.board.cursymbol,
                         current_tile.rent())]
 
@@ -154,7 +153,7 @@ class Game(object):
         elif cmd == 'no':
             # TODO Auction
             msg += ["Property is going up for action."]
-            msg += ["(Not implemented yet)"]
+            msg += ["(UNFINISHED)"]
             self.interactive_cb = None
         else:
             msg += ["Not a valid command. Your options are: 'yes' and 'no'."]

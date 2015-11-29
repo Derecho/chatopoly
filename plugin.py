@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+#) -*- coding: utf-8 -*-
 import logging
 import sqlite3
 import os
@@ -250,15 +250,31 @@ class ChatopolyPlugin(object):
                     "this command.".format(nick))
             return
 
-        if msg.split(' ') != 2:
+        args = msg.split(' ')
+        if len(args) != 2:
             cardinal.sendMsg(channel, "{}: Usage: 'load <id>'".format(nick))
             return
 
-        self.state = ChatopolyState.INPROGRESS
-        self.logger.info("Loading game: {}".format(
-            " ".join(self.game.get_player_nicks())))
+        c = self.conn.cursor()
+        c.execute("SELECT state FROM games WHERE rowid = ?", (args[1],))
+        result = c.fetchone()
 
-        # TODO SELECT game
+        if not result:
+            cardinal.sendMsg(channel, "{}: Failed to find game".format(nick))
+            return
+
+        self.state = ChatopolyState.INPROGRESS
+        self.game = chatopoly.Game.from_savedata(result[0])
+
+        self.logger.info("Loading game: {}".format(self.game.started))
+        current_player = self.game.get_current_player()
+        cardinal.sendMsg(channel, "Game {} loaded. "
+                "It is {}'s turn (at {} with {}{}).".format(
+                    self.game.started,
+                    current_player.nick,
+                    self.game.board.tiles[current_player.position].name,
+                    self.game.board.cursymbol,
+                    current_player.balance))
 
     load.commands = ['load']
     load.help = ["Load a gamestate from the database"]

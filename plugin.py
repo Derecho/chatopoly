@@ -106,7 +106,7 @@ class ChatopolyPlugin(object):
             " ".join(self.game.get_player_nicks())))
 
         if self.config is not None:
-            if self.config['board_variant']:
+            if self.config.has_key('board_variant'):
                 self.game.prepare_board(config['board_variant'])
 
         if self.game.board == None:
@@ -139,8 +139,18 @@ class ChatopolyPlugin(object):
             return
 
         if self.state == ChatopolyState.INTERACTIVE:
+            should_roll = False
             output = self.game.interactive_cb('roll', msg.split(' '))
         else:
+            should_roll = True
+            if self.config is not None:
+                if self.config.has_key('god_mode') and self.config['god_mode']:
+                    args = msg.split(' ')
+                    if len(args) == (1 + len(self.game.dice)):
+                        output = self.game.roll(map(int, args[1:]))
+                        should_roll = False
+
+        if should_roll:
             output = self.game.roll()
 
         for line in output:

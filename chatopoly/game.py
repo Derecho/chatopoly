@@ -57,15 +57,19 @@ class Game(object):
 
         return False
 
-    def roll(self):
+    def roll(self, dice=None):
         """Rolls the dice for the current player and processes according
-        actions"""
+        actions. Takes an optional dice parameter to be used for debugging."""
         msg = []
 
         dicetotal = 0
         rolldetails = ""
         for i in range(len(self.dice)):
-            self.dice[i] = random.randint(1, DICE_MAX)
+            if dice:
+                self.dice[i] = dice[i]
+            else:
+                self.dice[i] = random.randint(1, DICE_MAX)
+
             dicetotal += self.dice[i]
 
             if rolldetails != "":
@@ -83,7 +87,7 @@ class Game(object):
             msg += ["You have passed GO and collect {}{}.".format(
                 self.board.cursymbol,
                 GO_REWARD)]
-            current_player.position -= len(self.board.tiles)
+            current_player.position %= len(self.board.tiles)
             current_player.balance += GO_REWARD
 
         current_tile = self.board.tiles[current_player.position]

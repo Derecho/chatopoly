@@ -250,12 +250,13 @@ class ChatopolyPlugin(object):
                     "this command.".format(nick))
             return
 
-        if len(msg.split(' ')) != 2:
+        args = msg.split(' ')
+        if len(args) != 2:
             cardinal.sendMsg(channel, "{}: Usage: 'load <id>'".format(nick))
             return
 
         c = self.conn.cursor()
-        c.execute("SELECT state FROM games WHERE rowid = ?", msg.split(' ')[1])
+        c.execute("SELECT state FROM games WHERE rowid = ?", (args[1],))
         result = c.fetchone()
 
         if not result:

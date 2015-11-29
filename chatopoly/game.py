@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import jsonpickle
 import random
+import datetime
 
 from player import *
 from board import *
@@ -19,6 +20,8 @@ class Game(object):
 
         for i in range(DICE_AMOUNT):
             self.dice += [0]
+
+        self.started = datetime.datetime.now()
 
     @staticmethod
     def from_savedata(savedata):

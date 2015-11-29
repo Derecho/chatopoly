@@ -3,6 +3,7 @@ import logging
 import sqlite3
 import os
 import random
+import datetime
 from enum import Enum
 
 import chatopoly
@@ -24,10 +25,10 @@ class ChatopolyPlugin(object):
 
     def _connect_or_create_db(self, cardinal):
         try:
-            self.conn = sqlite3.connect(os.path.join(
-                cardinal.storage_path,
-                'chatopoly-%s.db' % cardinal.network
-            ))
+            self.conn = sqlite3.connect(
+                    os.path.join(cardinal.storage_path, "chatopoly-{}.db".format(cardinal.network)),
+                    detect_types=sqlite3.PARSE_DECLTYPES
+                    )
         except Exception:
             self.conn = None
             self.logger.exception("Unable to access local chatopoly database")
@@ -35,14 +36,58 @@ class ChatopolyPlugin(object):
 
         c = self.conn.cursor()
         c.execute("CREATE TABLE IF NOT EXISTS highscores ("
-                  "nick TEXT PRIMARY KEY, "
-                  "wins INTEGER)")
+                "nick TEXT PRIMARY KEY, "
+                "wins INTEGER)")
         c.execute("CREATE TABLE IF NOT EXISTS games ("
-                  "id INTEGER PRIMARY KEY ASC, "
-                  "start INTEGER, "
-                  "saved INTEGER, "
-                  "state TEXT)")
+                "start timestamp PRIMARY KEY, "  # module-provided type, not pure sqlite
+                "saved timestamp, "
+                "state TEXT)")
         self.conn.commit()
+
+    def _interactive_cmd(self, cmd, cardinal, user, channel, msg):
+        nick, ident, vhost = user.group(1), user.group(2), user.group(3)
+        if nick == channel:
+            cardinal.sendMsg(channel, "This is a channel command.")
+            return
+
+        if nick not in [player.nick for player in self.game.players]:
+            return
+
+        if nick != self.game.get_current_player().nick:
+            cardinal.sendMsg(channel, "{}: It is {}'s turn.".format(nick,
+                self.game.get_current_player().nick))
+            return
+
+        if self.state != ChatopolyState.INTERACTIVE:
+            cardinal.sendMsg(channel, "{}: Not a valid command.".format(nick))
+            return
+
+        output = self.game.interactive_cb(cmd, msg.split(' '))
+
+        for line in output:
+            cardinal.sendMsg(channel, line)
+
+        if not self.game.interactive_cb:
+            self.state = ChatopolyState.INPROGRESS
+
+    def _check_admin(self, nick):
+        if self.config is not None:
+            if self.config.has_key('admins'):
+                if nick in self.config['admins']:
+                    return True
+
+        self.logger.warning("Admin check failed for: {}".format(nick))
+        return False
+
+    def _save_game(self):
+        c = self.conn.cursor()
+        c.execute("INSERT OR REPLACE INTO games (start, saved, state) VALUES("
+                "?, ?, ?)", (
+                    self.game.started, 
+                    datetime.datetime.now(),
+                    self.game.to_savedata()))
+        self.conn.commit()
+        self.logger.info("Game saved")
 
     def newgame(self, cardinal, user, channel, msg):
         nick, ident, vhost = user.group(1), user.group(2), user.group(3)
@@ -102,7 +147,7 @@ class ChatopolyPlugin(object):
             return
 
         self.state = ChatopolyState.INPROGRESS
-        self.logger.info("Started new game with players: {}".format(
+        self.logger.info("Starting new game with players: {}".format(
             " ".join(self.game.get_player_nicks())))
 
         if self.config is not None:
@@ -174,31 +219,49 @@ class ChatopolyPlugin(object):
         self._interactive_cmd('pay', cardinal, user, channel, msg)
     pay.commands = ['pay']
 
-    def _interactive_cmd(self, cmd, cardinal, user, channel, msg):
+    def save(self, cardinal, user, channel, msg):
         nick, ident, vhost = user.group(1), user.group(2), user.group(3)
-        if nick == channel:
-            cardinal.sendMsg(channel, "This is a channel command.")
+        if ((self.state == ChatopolyState.IDLE) |
+                (self.state == ChatopolyState.STARTING)):
+            cardinal.sendMsg(channel, "{}: No game is running at the "
+            "moment.".format(nick))
+            return
+        elif self.state == ChatopolyState.INTERACTIVE:
+            cardinal.sendMsg(channel, "{}: You cannot save the game until the "
+                    "current interaction with a player has finished.".format(
+                        nick))
             return
 
-        if nick not in [player.nick for player in self.game.players]:
+        if not self._check_admin(nick):
+            cardinal.sendMsg(channel, "{}: You are not permitted to execute "
+                    "this command.".format(nick))
             return
 
-        if nick != self.game.get_current_player().nick:
-            cardinal.sendMsg(channel, "{}: It is {}'s turn.".format(nick,
-                self.game.get_current_player().nick))
+        self._save_game()
+        cardinal.sendMsg(channel, "Game has been saved to the database.")
+
+    save.commands = ['save']
+    save.help = ["Save the current gamestate to the database"]
+
+    def listsaves(self, cardinal, user,channel, msg):
+        nick, ident, vhost = user.group(1), user.group(2), user.group(3)
+        if not self._check_admin(nick):
+            cardinal.sendMsg(channel, "{}: You are not permitted to execute "
+                    "this command.".format(nick))
             return
 
-        if self.state != ChatopolyState.INTERACTIVE:
-            cardinal.sendMsg(channel, "{}: Not a valid command.".format(nick))
-            return
+        cardinal.sendMsg(channel, "Listing games present in the database:")
+        c = self.conn.cursor()
+        c.execute("SELECT rowid, start, saved FROM games")
+        for result in c.fetchall():
+            cardinal.sendMsg(channel, "Game: {}, started: {}, "
+                    "last saved: {}".format(
+                        result[0],
+                        result[1],
+                        result[2]))
 
-        output = self.game.interactive_cb(cmd, msg.split(' '))
-
-        for line in output:
-            cardinal.sendMsg(channel, line)
-
-        if not self.game.interactive_cb:
-            self.state = ChatopolyState.INPROGRESS
+    listsaves.commands = ['listsaves', 'ls']
+    listsaves.help = ["List saved games present in the database"]
 
 def setup(cardinal, config):
     return ChatopolyPlugin(cardinal, config)

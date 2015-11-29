@@ -10,10 +10,9 @@ class Board(object):
         for i in range(len(players)):
             self.players[players[i]] = i
 
-class UKBoard(Board):
+class USBoard(Board):
     def __init__(self, players):
-        super(UKBoard, self).__init__(players)
-        self.cursymbol = "£"
+        super(USBoard, self).__init__(players)
         self.tiles.append(Go())
         self.tiles.append(Street("Mediteranean Avenue (P)",
             60, 50, [2, 10, 30, 90, 160, 250]))

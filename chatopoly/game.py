@@ -54,8 +54,8 @@ class Game(object):
             return False
 
         # TODO Cleaner way. Maybe a dictionary that Boards add themselves to.
-        if variant == 'uk':
-            self.board = UKBoard(self.players)
+        if variant == 'us':
+            self.board = USBoard(self.players)
             return True
 
         return False

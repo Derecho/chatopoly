@@ -155,7 +155,7 @@ class ChatopolyPlugin(object):
                 self.game.prepare_board(config['board_variant'])
 
         if self.game.board == None:
-            self.game.prepare_board('uk')
+            self.game.prepare_board('us')
 
         self.game.current_player_id = random.randint(0, len(self.game.players)-1)
         cardinal.sendMsg(channel, "Game started, {} starts.".format(

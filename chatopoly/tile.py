@@ -65,11 +65,13 @@ class Street(Property):
     """The most common property, streets can form monopolies and subsequently
     allow houses and hotels to be built. Rentprices is a list of successive
     prices for the corresponding amount of houses built."""
-    def __init__(self, name, price, houseprice, rentprices):
-        super(Street, self).__init__(name, price)
-        self.houseprice = houseprice
+    def __init__(self, name, monopoly, price, rentprices):
+        super(Street, self).__init__("{} ({})".format(name, monopoly.colour),
+                price)
+        self.monopoly = monopoly
         self.rentprices = rentprices
         self.buildlevel = 0
+        monopoly.streets.append(self)
 
     def rent(self):
         return self.rentprices[self.buildlevel]

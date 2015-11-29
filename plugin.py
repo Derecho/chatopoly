@@ -243,6 +243,26 @@ class ChatopolyPlugin(object):
     save.commands = ['save']
     save.help = ["Save the current gamestate to the database"]
 
+    def load(self, cardinal, user, channel, msg):
+        nick, ident, vhost = user.group(1), user.group(2), user.group(3)
+        if not self._check_admin(nick):
+            cardinal.sendMsg(channel, "{}: You are not permitted to execute "
+                    "this command.".format(nick))
+            return
+
+        if msg.split(' ') != 2:
+            cardinal.sendMsg(channel, "{}: Usage: 'load <id>'".format(nick))
+            return
+
+        self.state = ChatopolyState.INPROGRESS
+        self.logger.info("Loading game: {}".format(
+            " ".join(self.game.get_player_nicks())))
+
+        # TODO SELECT game
+
+    load.commands = ['load']
+    load.help = ["Load a gamestate from the database"]
+
     def listsaves(self, cardinal, user,channel, msg):
         nick, ident, vhost = user.group(1), user.group(2), user.group(3)
         if not self._check_admin(nick):

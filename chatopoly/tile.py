@@ -63,11 +63,12 @@ class Property(Tile):
 # TODO Building/removing houses, check monopoly + distribution
 class Street(Property):
     """The most common property, streets can form monopolies and subsequently
-    allow houses and hotels to be built."""
-    def __init__(self, name, price, rentprices):
+    allow houses and hotels to be built. Rentprices is a list of successive
+    prices for the corresponding amount of houses built."""
+    def __init__(self, name, price, houseprice, rentprices):
         super(Street, self).__init__(name, price)
+        self.houseprice = houseprice
         self.rentprices = rentprices
-        # TODO rentprices format {2, 10, 30, 90, 160, 250}
         self.buildlevel = 0
 
     def rent(self):

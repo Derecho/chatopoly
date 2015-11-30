@@ -170,8 +170,7 @@ class LuxuryTax(Special):
         self.game = None
 
     def on_entry(self, game):
-        current_player = game.get_current_player()
-        current_player.balance = current_player.balance - LUX_TAX
+        game.get_current_player().balance -= LUX_TAX
         return ["You pay {}{}.".format(
             game.board.cursymbol,
             LUX_TAX)]

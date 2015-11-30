@@ -28,21 +28,21 @@ class Property(Tile):
 
     def mortgage_value(self):
         """Returns mortgage value, or 0 if already mortgaged."""
-        if self.mortgaged == True:
+        if self.mortgaged:
             return 0
         else:
-            return (MORT_MUL * self.price)
+            return int(MORT_MUL * self.price)
 
     def unmortgage_cost(self):
         """Returns unmortgage cost, or 0 if not mortgaged"""
-        if self.mortgaged == False:
+        if not self.mortgaged:
             return 0
         else:
-            return ((MORT_MUL * self.price) * (1 + MORT_LOSS))
+            return int((MORT_MUL * self.price) * (1 + MORT_LOSS))
 
     def mortgage(self):
         """Attempts to mortgage the property"""
-        if self.mortgaged == True:
+        if self.mortgaged:
             return False
         else:
             self.owner.balance += self.mortgage_value()
@@ -51,13 +51,13 @@ class Property(Tile):
 
     def unmortgage(self):
         """Attempts to unmortgage the property"""
-        if self.mortgaged == False:
+        if not self.mortgaged:
             return False
 
         if self.owner.balance < self.unmortgage_cost():
             return False
 
-        self.owner.balance - self.unmortgage_cost()
+        self.owner.balance -= self.unmortgage_cost()
         self.mortgaged = False
         return True
 

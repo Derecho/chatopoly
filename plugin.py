@@ -93,15 +93,15 @@ class ChatopolyPlugin(object):
     def _mortgage_cb(self, cmd, args):
         msg = []
         subject = self.mortgage_subject
+        player = self.game.get_current_player()
 
         if cmd == 'yes':
             # TODO Check for houses
-            subject.mortgaged ^= True
 
             if subject.mortgaged:
-                self.game.get_current_player().balance += subject.mortgage_value()
+                subject.unmortgage()
             else:
-                self.game.get_current_player().balance -= subject.unmortgage_cost()
+                subject.mortgage()
 
             msg += ["You have {}mortgaged {}.".format(
                 "" if subject.mortgaged else "un",
@@ -112,10 +112,10 @@ class ChatopolyPlugin(object):
             return ["Not a valid command. Your options are: 'yes' and 'no'."]
 
         msg += ["It is {}'s turn (at {} with {}{}).".format(
-                self.game.get_current_player().nick,
-                self.game.board.tiles[self.game.get_current_player().position].name,
+                player.nick,
+                self.game.board.tiles[player.position].name,
                 self.game.board.cursymbol,
-                self.game.get_current_player().balance)]
+                player.balance)]
 
         subject = None
         self.interactive_cb = None
@@ -442,6 +442,7 @@ class ChatopolyPlugin(object):
                 else:
                     cardinal.sendMsg(channel, "{}: Multiple properties match, "
                             "please be more specific.".format(nick))
+                    self.mortgage_subject = None
                     return
 
         # Show mortgage/unmortgage choice
@@ -452,9 +453,9 @@ class ChatopolyPlugin(object):
                 "for {}{}?".format(
                     "un" if self.mortgage_subject.mortgaged else "",
                     self.game.board.cursymbol,
-                    prop.unmortgage_cost() if
+                    self.mortgage_subject.unmortgage_cost() if
                     self.mortgage_subject.mortgaged else
-                    prop.mortgage_value()))
+                    self.mortgage_subject.mortgage_value()))
 
         self.game.interactive_cb = self._mortgage_cb
         self.state = ChatopolyState.INTERACTIVE

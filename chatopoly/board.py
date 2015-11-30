@@ -66,7 +66,7 @@ class USABoard(Board):
         self.tiles.append(Jail)
         self.tiles.append(Street("Saint Charles place",
             violet, 140, [10, 50, 150, 450, 625, 750]))
-        self.tiles.append(Utility("Electric Company""))
+        self.tiles.append(Utility("Electric Company"))
         self.tiles.append(Street("States Avenue",
             violet, 140, [10, 50, 150, 450, 625, 750]))
         self.tiles.append(Street("Virginia Avenue",

@@ -345,7 +345,7 @@ class ChatopolyPlugin(object):
         for prop in subject.properties:
             price_str = str(prop.price)
             if len(price_str) < 3:
-                price_str = " " * (3 - len(price_str) + price_str)
+                price_str = " " * (3 - len(price_str)) + price_str
 
             # Name, spacing, price, mortgaged, houses, rent
             cardinal.sendMsg(channel, "{}{}{} {} {} {}".format(

@@ -23,7 +23,7 @@ class Property(Tile):
         self.owner = None
         self.mortgaged = False
 
-    def rent(self):
+    def rent(self, dice):
         raise NotImplementedError
 
     def mortgage_value(self):
@@ -74,7 +74,7 @@ class Street(Property):
         self.buildlevel = 0
         monopoly.streets.append(self)
 
-    def rent(self):
+    def rent(self, dice):
         return self.rentprices[self.buildlevel]
 
     def mortgage(self):
@@ -90,7 +90,7 @@ class Railroad(Property):
     def __init__(self, name):
         super(Railroad, self).__init__("{} Railroad".format(name), RR_PRICE)
 
-    def rent(self):
+    def rent(self, dice):
         total_rr = 0
         for prop in self.owner.properties:
             if isinstance(prop, Railroad):
@@ -99,19 +99,19 @@ class Railroad(Property):
         return (RR_BASE_RENT * (2 ** (total_rr - 1)))
 
 class Utility(Property):
-    """Utilities are simple properties that base their rent own dice throw and
+    """Utilities are simple properties that base their rent on dice throw and
     amount of other possessed utilities by the owner"""
     def __init__(self, name):
         super(Utility, self).__init__(name, UTIL_PRICE)
 
-    def rent(self):
+    def rent(self, dice):
         total_util = 0
         for prop in self.owner.properties:
             if isinstance(prop, Utility):
                 total_util += 1
 
         multiplier = UTIL_MUL_DUO if (total_util == 2) else UTIL_MUL_SOLO
-        return (multiplier * self.owner.last_roll)
+        return (multiplier * dice)
 
 class Special(Tile):
     """(Abstract) Special tiles are tiles with customisable behaviour"""

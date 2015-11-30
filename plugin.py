@@ -355,7 +355,7 @@ class ChatopolyPlugin(object):
                 price_str,
                 "M" if prop.mortgaged else " ",
                 prop.buildlevel if isinstance(prop, chatopoly.Street) else "-",
-                prop.rent()))
+                prop.rent(1)))
 
         # TODO Get-out-of-jail-free card
 

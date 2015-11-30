@@ -81,7 +81,6 @@ class Game(object):
         rolldetails += "= {}".format(dicetotal)
 
         current_player = self.get_current_player()
-        current_player.last_roll = dicetotal
         current_player.position += dicetotal
 
         msg += ["You roll {}.".format(rolldetails)]
@@ -109,11 +108,11 @@ class Game(object):
                 msg += ["Property is owned by {}.".format(
                     current_tile.owner.nick)]
                 if not current_tile.mortgaged:
-                    current_player.balance -= current_tile.rent()
-                    current_tile.owner.balance += current_tile.rent()
+                    current_player.balance -= current_tile.rent(dicetotal)
+                    current_tile.owner.balance += current_tile.rent(dicetotal)
                     msg += ["You pay {}{} rent.".format(
                         self.board.cursymbol,
-                        current_tile.rent())]
+                        current_tile.rent(dicetotal))]
 
             if current_tile.mortgaged:
                 msg += ["Property is mortgaged."]

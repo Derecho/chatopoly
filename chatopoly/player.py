@@ -5,5 +5,4 @@ class Player(object):
         self.balance = 1500
         self.properties = []
         self.jailcard = False
-        self.last_roll = 0
         self.position = 0

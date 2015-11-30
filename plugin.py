@@ -435,7 +435,7 @@ class ChatopolyPlugin(object):
         query = " ".join(args[1:])
         found = False
         for prop in self.game.get_current_player().properties:
-            if query in prop.name:
+            if prop.name.lower().find(query.lower()) != -1:
                 if not found:
                     found = True
                     self.mortgage_subject = prop
@@ -444,6 +444,11 @@ class ChatopolyPlugin(object):
                             "please be more specific.".format(nick))
                     self.mortgage_subject = None
                     return
+
+        if not found:
+            cardinal.sendMsg(channel, "{}: Could not find a matching "
+                    "property.".format(nick))
+            return
 
         # Show mortgage/unmortgage choice
         cardinal.sendMsg(channel, "{} is currently {}mortgaged.".format(

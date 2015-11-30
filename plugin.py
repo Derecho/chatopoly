@@ -279,7 +279,7 @@ class ChatopolyPlugin(object):
     load.commands = ['load']
     load.help = ["Load a gamestate from the database"]
 
-    def listsaves(self, cardinal, user,channel, msg):
+    def listsaves(self, cardinal, user, channel, msg):
         nick, ident, vhost = user.group(1), user.group(2), user.group(3)
         if not self._check_admin(nick):
             cardinal.sendMsg(channel, "{}: You are not permitted to execute "
@@ -295,6 +295,72 @@ class ChatopolyPlugin(object):
                         result[0],
                         result[1],
                         result[2]))
+    
+    def holdings(self, cardinal, user, channel, msg):
+        nick, ident, vhost = user.group(1), user.group(2), user.group(3)
+
+        if ((self.state == ChatopolyState.IDLE) |
+                (self.state == ChatopolyState.STARTING)):
+            cardinal.sendMsg(channel, "{}: No game is running at the "
+            "moment.".format(nick))
+            return
+
+        if nick not in [player.nick for player in self.game.players]:
+            return
+
+        # If in channel, only player whose turn it is can run this command
+        if nick != channel:
+            if nick != self.game.get_current_player().nick:
+                cardinal.sendMsg(channel, "{}: It is {}'s turn.".format(nick,
+                    self.game.get_current_player().nick))
+                return
+
+        args = msg.split(' ')
+        if len(args) == 1:
+            subject_nick = nick
+        elif len(args) == 2:
+            subject_nick = args[1]
+        else:
+            cardinal.sendMsg(channel, "{}: Usage: 'holdings [player]'".format(
+                nick))
+            return
+
+        subject = None
+        for player in self.game.players:
+            if player.nick == subject_nick:
+                subject = player
+
+        if subject == None:
+            cardinal.sendMsg(channel, "{}: No such player found".format(nick))
+            return
+
+        # All various wrong situations have been handled, now actually print
+        # the holdings of the requested player
+
+        cardinal.sendMsg(channel, "{}'s holdings:".format(subject_nick))
+        cardinal.sendMsg(channel, "Balance: {}{}".format(
+            self.game.board.cursymbol,
+            subject.balance))
+
+        for prop in subject.properties:
+            price_str = str(prop.price)
+            if len(price_str) < 3:
+                price_str = " " * (3 - len(price_str) + price_str)
+
+            # Name, spacing, price, mortgaged, houses, rent
+            cardinal.sendMsg(channel, "{}{}{} {} {} {}".format(
+                # TODO Get max name width from config
+                prop.name[:25],
+                " " * (25 - len(prop.name)),
+                price_str,
+                "M" if prop.mortgaged else " ",
+                prop.buildlevel if isinstance(prop, chatopoly.Street) else "-",
+                prop.rent()))
+
+        # TODO Get-out-of-jail-free card
+
+    holdings.commands = ['holdings', 'h']
+    holdings.help = ["Show holdings of a player (own if no argument)"]
 
     listsaves.commands = ['listsaves', 'ls']
     listsaves.help = ["List saved games present in the database"]

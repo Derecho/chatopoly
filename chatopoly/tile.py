@@ -6,8 +6,9 @@ UTIL_MUL_SOLO = 4
 UTIL_MUL_DUO = 10
 MORT_MUL = 0.5
 MORT_LOSS = 0.1
-TAX_PRCT = 10
-TAX_FLAT = 200
+INC_TAX_PRCT = 10
+INC_TAX_FLAT = 200
+LUX_TAX = 75
 
 class Tile(object):
     """(Abstract) Any sort of tile that a player could stand on"""
@@ -163,16 +164,17 @@ class Chance(Special):
         # TODO Pick card and process effect
         pass
 class LuxuryTax(Special):
-    def __init__(self,luxury_tax):
-        super(LuxuryTax, self).__init("Luxury Tax")
+    """Player arrived on Luxury Tax, flat fee"""
+    def __init__(self):
+        super(LuxuryTax, self).__init__("Luxury Tax")
         self.game = None
-        self.luxury_tax = luxury_tax
+
     def on_entry(self, game):
-        current_player = self.game.get_current_player()
-        current_player.balance = current_player.balance - luxury_tax
-        return ["You landed on luxury tax, you pay {}{}".format(
-            luxury_tax,
-            game.board.cursymbol)]
+        current_player = game.get_current_player()
+        current_player.balance = current_player.balance - LUX_TAX
+        return ["You pay {}{}.".format(
+            game.board.cursymbol,
+            LUX_TAX)]
 
 class IncomeTax(Special):
     def __init__(self):
@@ -186,12 +188,12 @@ class IncomeTax(Special):
         game.interactive_cb = self._choice_cb
 
         msg =  ["Pay up, {}% of your total worth or {}{}?".format(
-            TAX_PRCT,
+            INC_TAX_PRCT,
             game.board.cursymbol,
-            TAX_FLAT)]
+            INC_TAX_FLAT)]
         msg += ["(Enter 'pay {}%' or 'pay {}' command)".format(
-            TAX_PRCT,
-            TAX_FLAT)]
+            INC_TAX_PRCT,
+            INC_TAX_FLAT)]
 
         return msg
 

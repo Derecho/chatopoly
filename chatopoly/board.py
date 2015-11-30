@@ -11,9 +11,9 @@ class Board(object):
         for i in range(len(players)):
             self.players[players[i]] = i
 
-class USBoard(Board):
+class TestBoard(Board):
     def __init__(self, players):
-        super(USBoard, self).__init__(players)
+        super(TestBoard, self).__init__(players)
 
         purple = Monopoly("P", 50)
         light_blue = Monopoly("L", 50)
@@ -35,9 +35,9 @@ class USBoard(Board):
             light_blue, 120, [8, 40,100, 300, 450, 600]))
         self.tiles.append(Jail())
 
-class USABoard(Board):
+class USBoard(Board):
     def __init__(self,players):
-        super(USABoard, self).__init__(players)
+        super(USBoard, self).__init__(players)
 
         purple = Monopoly("P", 50)
         light_blue = Monopoly("L", 50)
@@ -46,7 +46,7 @@ class USABoard(Board):
         red = Monopoly("R", 150)
         yellow = Monopoly("Y", 150)
         green = Monopoly("G", 200)
-        dkblue = Monopoly("D", 200)
+        dark_blue = Monopoly("D", 200)
 
         self.tiles.append(Go())
         self.tiles.append(Street("Mediteranean Avenue",
@@ -58,12 +58,12 @@ class USABoard(Board):
         self.tiles.append(Railroad("Reading"))
         self.tiles.append(Street("Oriental Avenue",
             light_blue, 100, [6, 30, 90, 270, 400, 550]))
-        self.tile.append(Chance(1))
+        self.tiles.append(Chance(1))
         self.tiles.append(Street("Vermont Avenue",
             light_blue, 100, [6, 30, 90, 270, 400, 550]))
         self.tiles.append(Street("Connecticut Avenue",
             light_blue, 120, [8, 40, 100, 300, 450, 600]))
-        self.tiles.append(Jail)
+        self.tiles.append(Jail())
         self.tiles.append(Street("Saint Charles place",
             violet, 140, [10, 50, 150, 450, 625, 750]))
         self.tiles.append(Utility("Electric Company"))
@@ -79,7 +79,7 @@ class USABoard(Board):
             orange, 180, [14, 70, 200, 550, 750, 950]))
         self.tiles.append(Street("New York Avenue",
             orange, 200, [16, 80, 220, 600, 800, 1000]))
-        self.tiles.append(FreeParking("Free Parking"))
+        self.tiles.append(FreeParking())
         self.tiles.append(Street("Kentucky Avenue",
             red, 220, [18, 90, 250, 700, 875, 1050]))
         self.tiles.append(Chance(2))
@@ -94,7 +94,7 @@ class USABoard(Board):
             yellow, 260, [22, 110, 330, 800, 975, 1150]))
         self.tiles.append(Utility("Water Works"))
         self.tiles.append(Street("Marvin Gardens",
-            yellow, 260, [24, 120, 360, 850, 1025, 1200]))
+            yellow, 280, [24, 120, 360, 850, 1025, 1200]))
         self.tiles.append(GoToJail())
         self.tiles.append(Street("Pacific Avenue",
             green, 300, [26, 130, 390, 900, 1100, 1275]))
@@ -103,10 +103,10 @@ class USABoard(Board):
         self.tiles.append(CommunityChest(3))
         self.tiles.append(Street("Pennsylvania Avenue",
             green, 320, [28, 150, 450, 1000, 1200, 1400]))
-        self.tile.append(Railroad("Short Line"))
+        self.tiles.append(Railroad("Short Line"))
         self.tiles.append(Chance(3))
         self.tiles.append(Street("Park Place",
-            dkblue, 320, [35, 175, 500, 1100, 1300, 1500]))
-        self.tiles.append(LuxuryTax(75))
+            dark_blue, 320, [35, 175, 500, 1100, 1300, 1500]))
+        self.tiles.append(LuxuryTax())
         self.tiles.append(Street("Board Walk",
-            dkblue, 400, [50, 200, 600, 1400, 1700, 2000]))
+            dark_blue, 400, [50, 200, 600, 1400, 1700, 2000]))

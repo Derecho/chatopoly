@@ -20,6 +20,7 @@ class ChatopolyPlugin(object):
         self.config = config
         self.state = ChatopolyState.IDLE
         self.game = None
+        self.mortgage_subject = None
 
         self.logger.info("Chatopoly started")
 
@@ -88,6 +89,39 @@ class ChatopolyPlugin(object):
                     self.game.to_savedata()))
         self.conn.commit()
         self.logger.info("Game saved")
+
+    def _mortgage_cb(self, cmd, args):
+        msg = []
+        subject = self.mortgage_subject
+
+        if cmd == 'yes':
+            # TODO Check for houses
+            subject.mortgaged ^= True
+
+            if subject.mortgaged:
+                self.game.get_current_player().balance += subject.mortgage_value()
+            else:
+                self.game.get_current_player().balance -= subject.unmortgage_cost()
+
+            msg += ["You have {}mortgaged {}.".format(
+                "" if subject.mortgaged else "un",
+                subject.name)]
+        elif cmd == 'no':
+            pass
+        else:
+            return ["Not a valid command. Your options are: 'yes' and 'no'."]
+
+        msg += ["It is {}'s turn (at {} with {}{}).".format(
+                self.game.get_current_player().nick,
+                self.game.board.tiles[self.game.get_current_player().position].name,
+                self.game.board.cursymbol,
+                self.game.get_current_player().balance)]
+
+        subject = None
+        self.interactive_cb = None
+        self.state = ChatopolyState.INPROGRESS
+
+        return msg
 
     def newgame(self, cardinal, user, channel, msg):
         nick, ident, vhost = user.group(1), user.group(2), user.group(3)
@@ -295,6 +329,9 @@ class ChatopolyPlugin(object):
                         result[0],
                         result[1],
                         result[2]))
+
+    listsaves.commands = ['listsaves', 'ls']
+    listsaves.help = ["List saved games present in the database"]
     
     def holdings(self, cardinal, user, channel, msg):
         nick, ident, vhost = user.group(1), user.group(2), user.group(3)
@@ -362,8 +399,68 @@ class ChatopolyPlugin(object):
     holdings.commands = ['holdings', 'h']
     holdings.help = ["Show holdings of a player (own if no argument)"]
 
-    listsaves.commands = ['listsaves', 'ls']
-    listsaves.help = ["List saved games present in the database"]
+    def mortgage(self, cardinal, user, channel, msg):
+        nick, ident, vhost = user.group(1), user.group(2), user.group(3)
+        if nick == channel:
+            cardinal.sendMsg(channel, "This is a channel command.")
+            return
+
+        if ((self.state == ChatopolyState.IDLE) |
+                (self.state == ChatopolyState.STARTING)):
+            cardinal.sendMsg(channel, "{}: No game is running at the "
+            "moment.".format(nick))
+            return
+
+        if nick not in [player.nick for player in self.game.players]:
+            return
+
+        if nick != self.game.get_current_player().nick:
+            cardinal.sendMsg(channel, "{}: It is {}'s turn.".format(nick,
+                self.game.get_current_player().nick))
+            return
+
+        if self.state == ChatopolyState.INTERACTIVE:
+            output = self.game.interactive_cb('mortgage', msg.split(' '))
+            return
+
+        args = msg.split(' ')
+        if len(args) == 1:
+            cardinal.sendMsg(channel, "{}: Usage: 'mortgage <property>'".format(
+                nick))
+            cardinal.sendMsg(channel, "(You may specify just part of a "
+                    "property's name)")
+            return
+
+        # Search for property in user's posession
+        query = " ".join(args[1:])
+        found = False
+        for prop in self.game.get_current_player().properties:
+            if query in prop.name:
+                if not found:
+                    found = True
+                    self.mortgage_subject = prop
+                else:
+                    cardinal.sendMsg(channel, "{}: Multiple properties match, "
+                            "please be more specific.".format(nick))
+                    return
+
+        # Show mortgage/unmortgage choice
+        cardinal.sendMsg(channel, "{} is currently {}mortgaged.".format(
+            self.mortgage_subject.name,
+            "" if self.mortgage_subject.mortgaged else "not "))
+        cardinal.sendMsg(channel, "Would you like to {}mortgage it "
+                "for {}{}?".format(
+                    "un" if self.mortgage_subject.mortgaged else "",
+                    self.game.board.cursymbol,
+                    prop.unmortgage_cost() if
+                    self.mortgage_subject.mortgaged else
+                    prop.mortgage_value()))
+
+        self.game.interactive_cb = self._mortgage_cb
+        self.state = ChatopolyState.INTERACTIVE
+
+    mortgage.commands = ['mortgage', 'm']
+    listsaves.help = ["Manage the mortgage on your properties"]
 
 def setup(cardinal, config):
     return ChatopolyPlugin(cardinal, config)

@@ -6,8 +6,8 @@ UTIL_MUL_SOLO = 4
 UTIL_MUL_DUO = 10
 MORT_MUL = 0.5
 MORT_LOSS = 0.1
-LUXTAX_PRCT = 10
-LUXTAX_FLAT = 200
+TAX_PRCT = 10
+TAX_FLAT = 200
 
 class Tile(object):
     """(Abstract) Any sort of tile that a player could stand on"""
@@ -162,6 +162,17 @@ class Chance(Special):
     def on_entry(self, game):
         # TODO Pick card and process effect
         pass
+class LuxuryTax(Special):
+    def __init__(self,luxury_tax):
+        super(LuxuryTax, self).__init("Luxury Tax")
+        self.game = None
+        self.luxury_tax = luxury_tax
+    def on_entry(self, game):
+        current_player = self.game.get_current_player()
+        current_player.balance = current_player.balance - luxury_tax
+        return ["You landed on luxury tax, you pay {}{}".format(
+            luxury_tax,
+            game.board.cursymbol)]
 
 class IncomeTax(Special):
     def __init__(self):
@@ -175,12 +186,12 @@ class IncomeTax(Special):
         game.interactive_cb = self._choice_cb
 
         msg =  ["Pay up, {}% of your total worth or {}{}?".format(
-            LUXTAX_PRCT,
+            TAX_PRCT,
             game.board.cursymbol,
-            LUXTAX_FLAT)]
+            TAX_FLAT)]
         msg += ["(Enter 'pay {}%' or 'pay {}' command)".format(
-            LUXTAX_PRCT,
-            LUXTAX_FLAT)]
+            TAX_PRCT,
+            TAX_FLAT)]
 
         return msg
 
@@ -189,7 +200,7 @@ class IncomeTax(Special):
         msg = []
 
         if (cmd == 'pay') & (len(args) == 2):
-            if args[1] == "{}%".format(LUXTAX_PRCT):
+            if args[1] == "{}%".format(TAX_PRCT):
                 current_player = self.game.get_current_player()
                 total = current_player.balance
 
@@ -197,7 +208,7 @@ class IncomeTax(Special):
                     total += (prop.price - prop.unmortgage_cost())
                 # TODO Get out of jail free card?
                 # TODO Houses
-                tax = int((LUXTAX_PRCT/100.0) * total)
+                tax = int((TAX_PRCT/100.0) * total)
                 current_player.balance -= tax
                 msg += ["You pay: {}{} (UNFINISHED)".format(
                     self.game.board.cursymbol,
@@ -205,17 +216,17 @@ class IncomeTax(Special):
 
                 self.game.interactive_cb = None
 
-            elif args[1] == "{}".format(LUXTAX_FLAT):
-                self.game.get_current_player().balance -= LUXTAX_FLAT
+            elif args[1] == "{}".format(TAX_FLAT):
+                self.game.get_current_player().balance -= TAX_FLAT
                 self.game.interactive_cb = None
-            
+
         if self.game.interactive_cb == None:
             msg += [self.game._end_turn()]
             self.game = None
         else:
             msg += ["Not a valid command. Your options are: 'pay {}%' and "
                     "'pay {}'.".format(
-                LUXTAX_PRCT,
-                LUXTAX_FLAT)]
+                TAX_PRCT,
+                TAX_FLAT)]
 
         return msg

@@ -166,10 +166,11 @@ class LuxuryTax(Special):
     def __init__(self,luxury_tax):
         super(LuxuryTax, self).__init("Luxury Tax")
         self.game = None
+        self.luxury_tax = luxury_tax
     def on_entry(self, game):
         current_player = self.game.get_current_player()
         current_player.balance = current_player.balance - luxury_tax
-        return msg = ["You landed on luxury tax, you pay {}{}".format(
+        return ["You landed on luxury tax, you pay {}{}".format(
             luxury_tax,
             game.board.cursymbol)]
 

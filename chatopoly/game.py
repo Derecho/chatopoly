@@ -81,7 +81,7 @@ class Game(object):
         rolldetails += "= {}".format(dicetotal)
 
         current_player = self.get_current_player()
-        current_player.last_dice = dicetotal
+        current_player.last_roll = dicetotal
         current_player.position += dicetotal
 
         msg += ["You roll {}.".format(rolldetails)]

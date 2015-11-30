@@ -201,7 +201,7 @@ class IncomeTax(Special):
         msg = []
 
         if (cmd == 'pay') & (len(args) == 2):
-            if args[1] == "{}%".format(TAX_PRCT):
+            if args[1] == "{}%".format(INC_TAX_PRCT):
                 current_player = self.game.get_current_player()
                 total = current_player.balance
 
@@ -209,7 +209,7 @@ class IncomeTax(Special):
                     total += (prop.price - prop.unmortgage_cost())
                 # TODO Get out of jail free card?
                 # TODO Houses
-                tax = int((TAX_PRCT/100.0) * total)
+                tax = int((INC_TAX_PRCT/100.0) * total)
                 current_player.balance -= tax
                 msg += ["You pay: {}{} (UNFINISHED)".format(
                     self.game.board.cursymbol,
@@ -217,8 +217,8 @@ class IncomeTax(Special):
 
                 self.game.interactive_cb = None
 
-            elif args[1] == "{}".format(TAX_FLAT):
-                self.game.get_current_player().balance -= TAX_FLAT
+            elif args[1] == "{}".format(INC_TAX_FLAT):
+                self.game.get_current_player().balance -= INC_TAX_FLAT
                 self.game.interactive_cb = None
 
         if self.game.interactive_cb == None:
@@ -227,7 +227,7 @@ class IncomeTax(Special):
         else:
             msg += ["Not a valid command. Your options are: 'pay {}%' and "
                     "'pay {}'.".format(
-                TAX_PRCT,
-                TAX_FLAT)]
+                INC_TAX_PRCT,
+                INC_TAX_FLAT)]
 
         return msg

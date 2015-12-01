@@ -144,7 +144,7 @@ class Game(object):
             if dice:
                 self.dice[i] = dice[i]
             else:
-                self.dice[i] = random.randint(1, DICE_MAX)
+                self.dice[i] = random.SystemRandom().randint(1, DICE_MAX)
 
             dicetotal += self.dice[i]
 

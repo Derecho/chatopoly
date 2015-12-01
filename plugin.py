@@ -4,6 +4,7 @@ import sqlite3
 import os
 import random
 import datetime
+from functools import partial
 from enum import Enum
 
 import chatopoly
@@ -20,7 +21,6 @@ class ChatopolyPlugin(object):
         self.config = config
         self.state = ChatopolyState.IDLE
         self.game = None
-        self.mortgage_subject = None
 
         self.logger.info("Chatopoly started")
 
@@ -90,9 +90,8 @@ class ChatopolyPlugin(object):
         self.conn.commit()
         self.logger.info("Game saved")
 
-    def _mortgage_cb(self, cmd, args):
+    def _mortgage_cb(self, cmd, args, subject):
         msg = []
-        subject = self.mortgage_subject
         player = self.game.get_current_player()
 
         if cmd == 'yes':
@@ -117,9 +116,7 @@ class ChatopolyPlugin(object):
                 self.game.board.cursymbol,
                 player.balance)]
 
-        subject = None
-        self.interactive_cb = None
-        self.state = ChatopolyState.INPROGRESS
+        self.game.interactive_cb = None
 
         return msg
 
@@ -438,11 +435,10 @@ class ChatopolyPlugin(object):
             if prop.name.lower().find(query.lower()) != -1:
                 if not found:
                     found = True
-                    self.mortgage_subject = prop
+                    subject = prop
                 else:
                     cardinal.sendMsg(channel, "{}: Multiple properties match, "
                             "please be more specific.".format(nick))
-                    self.mortgage_subject = None
                     return
 
         if not found:
@@ -452,17 +448,17 @@ class ChatopolyPlugin(object):
 
         # Show mortgage/unmortgage choice
         cardinal.sendMsg(channel, "{} is currently {}mortgaged.".format(
-            self.mortgage_subject.name,
-            "" if self.mortgage_subject.mortgaged else "not "))
+            subject.name,
+            "" if subject.mortgaged else "not "))
         cardinal.sendMsg(channel, "Would you like to {}mortgage it "
                 "for {}{}?".format(
-                    "un" if self.mortgage_subject.mortgaged else "",
+                    "un" if subject.mortgaged else "",
                     self.game.board.cursymbol,
-                    self.mortgage_subject.unmortgage_cost() if
-                    self.mortgage_subject.mortgaged else
-                    self.mortgage_subject.mortgage_value()))
+                    subject.unmortgage_cost() if
+                    subject.mortgaged else
+                    subject.mortgage_value()))
 
-        self.game.interactive_cb = self._mortgage_cb
+        self.game.interactive_cb = partial(self._mortgage_cb, subject=subject)
         self.state = ChatopolyState.INTERACTIVE
 
     mortgage.commands = ['mortgage', 'm']

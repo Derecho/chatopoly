@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+from functools import partial
+
 RR_PRICE = 200
 RR_BASE_RENT = 25
 UTIL_PRICE = 150
@@ -167,7 +169,6 @@ class LuxuryTax(Special):
     """Player arrived on Luxury Tax, flat fee"""
     def __init__(self):
         super(LuxuryTax, self).__init__("Luxury Tax")
-        self.game = None
 
     def on_entry(self, game):
         game.get_current_player().balance -= LUX_TAX
@@ -178,13 +179,11 @@ class LuxuryTax(Special):
 class IncomeTax(Special):
     def __init__(self):
         super(IncomeTax, self).__init__("Income Tax")
-        self.game = None
 
     def on_entry(self, game):
         """Player arrived at Income Tax, prepare interactive session"""
         msg = []
-        self.game = game
-        game.interactive_cb = self._choice_cb
+        game.interactive_cb = partial(self._choice_cb, game=game)
 
         msg =  ["Pay up, {}% of your total worth or {}{}?".format(
             INC_TAX_PRCT,
@@ -196,13 +195,13 @@ class IncomeTax(Special):
 
         return msg
 
-    def _choice_cb(self, cmd, args):
+    def _choice_cb(self, cmd, args, game):
         """Callback handling payment of income tax"""
         msg = []
 
         if (cmd == 'pay') & (len(args) == 2):
             if args[1] == "{}%".format(INC_TAX_PRCT):
-                current_player = self.game.get_current_player()
+                current_player = game.get_current_player()
                 total = current_player.balance
 
                 for prop in current_player.properties:
@@ -212,18 +211,17 @@ class IncomeTax(Special):
                 tax = int((INC_TAX_PRCT/100.0) * total)
                 current_player.balance -= tax
                 msg += ["You pay: {}{} (UNFINISHED)".format(
-                    self.game.board.cursymbol,
+                    game.board.cursymbol,
                     tax)]
 
-                self.game.interactive_cb = None
+                game.interactive_cb = None
 
             elif args[1] == "{}".format(INC_TAX_FLAT):
-                self.game.get_current_player().balance -= INC_TAX_FLAT
-                self.game.interactive_cb = None
+                game.get_current_player().balance -= INC_TAX_FLAT
+                game.interactive_cb = None
 
-        if self.game.interactive_cb == None:
-            msg += [self.game._end_turn()]
-            self.game = None
+        if game.interactive_cb == None:
+            msg += [game._end_turn()]
         else:
             msg += ["Not a valid command. Your options are: 'pay {}%' and "
                     "'pay {}'.".format(

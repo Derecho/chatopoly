@@ -4,7 +4,6 @@ import sqlite3
 import os
 import random
 import datetime
-from functools import partial
 from enum import Enum
 
 import chatopoly
@@ -89,36 +88,6 @@ class ChatopolyPlugin(object):
                     self.game.to_savedata()))
         self.conn.commit()
         self.logger.info("Game saved")
-
-    def _mortgage_cb(self, cmd, args, subject):
-        msg = []
-        player = self.game.get_current_player()
-
-        if cmd == 'yes':
-            # TODO Check for houses
-
-            if subject.mortgaged:
-                subject.unmortgage()
-            else:
-                subject.mortgage()
-
-            msg += ["You have {}mortgaged {}.".format(
-                "" if subject.mortgaged else "un",
-                subject.name)]
-        elif cmd == 'no':
-            pass
-        else:
-            return ["Not a valid command. Your options are: 'yes' and 'no'."]
-
-        msg += ["It is {}'s turn (at {} with {}{}).".format(
-                player.nick,
-                self.game.board.tiles[player.position].name,
-                self.game.board.cursymbol,
-                player.balance)]
-
-        self.game.interactive_cb = None
-
-        return msg
 
     def newgame(self, cardinal, user, channel, msg):
         nick, ident, vhost = user.group(1), user.group(2), user.group(3)
@@ -417,7 +386,8 @@ class ChatopolyPlugin(object):
             return
 
         if self.state == ChatopolyState.INTERACTIVE:
-            output = self.game.interactive_cb('mortgage', msg.split(' '))
+            for line in self.game.interactive_cb('mortgage', msg.split(' ')):
+                cardinal.sendMsg(channel, line)
             return
 
         args = msg.split(' ')
@@ -428,38 +398,11 @@ class ChatopolyPlugin(object):
                     "property's name)")
             return
 
-        # Search for property in user's posession
-        query = " ".join(args[1:])
-        found = False
-        for prop in self.game.get_current_player().properties:
-            if prop.name.lower().find(query.lower()) != -1:
-                if not found:
-                    found = True
-                    subject = prop
-                else:
-                    cardinal.sendMsg(channel, "{}: Multiple properties match, "
-                            "please be more specific.".format(nick))
-                    return
+        for line in self.game.mortgage(" ".join(args[1:])):
+            cardinal.sendMsg(channel, line)
 
-        if not found:
-            cardinal.sendMsg(channel, "{}: Could not find a matching "
-                    "property.".format(nick))
-            return
-
-        # Show mortgage/unmortgage choice
-        cardinal.sendMsg(channel, "{} is currently {}mortgaged.".format(
-            subject.name,
-            "" if subject.mortgaged else "not "))
-        cardinal.sendMsg(channel, "Would you like to {}mortgage it "
-                "for {}{}?".format(
-                    "un" if subject.mortgaged else "",
-                    self.game.board.cursymbol,
-                    subject.unmortgage_cost() if
-                    subject.mortgaged else
-                    subject.mortgage_value()))
-
-        self.game.interactive_cb = partial(self._mortgage_cb, subject=subject)
-        self.state = ChatopolyState.INTERACTIVE
+        if self.game.interactive_cb:
+            self.state = ChatopolyState.INTERACTIVE
 
     mortgage.commands = ['mortgage', 'm']
     listsaves.help = ["Manage the mortgage on your properties"]

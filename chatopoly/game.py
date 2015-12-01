@@ -2,6 +2,7 @@
 import jsonpickle
 import random
 import datetime
+from functools import partial
 
 from player import *
 from board import *
@@ -22,6 +23,75 @@ class Game(object):
             self.dice += [0]
 
         self.started = datetime.datetime.now()
+
+    def _end_turn(self):
+        """Gives turn to next player (unless in debt), returns according message"""
+        self.current_player_id = (self.current_player_id + 1) % len(self.players)
+        # TODO Handle debt
+        # TODO on_turn of tile
+        return "Turn goes to {} (at {} with {}{}).".format(
+                self.get_current_player().nick,
+                self.board.tiles[self.get_current_player().position].name,
+                self.board.cursymbol,
+                self.get_current_player().balance)
+
+    def _purchase_cb(self, cmd, args):
+        """Callback handling property purchases"""
+        msg = []
+
+        if cmd == 'yes':
+            current_player = self.get_current_player()
+            current_tile = self.board.tiles[current_player.position]
+            current_player.balance -= current_tile.price
+            current_player.properties += [current_tile]
+            current_tile.owner = current_player
+            msg += ["{} has been purchased, you have {}{} left.".format(
+                current_tile.name,
+                self.board.cursymbol,
+                current_player.balance)]
+            self.interactive_cb = None
+        elif cmd == 'no':
+            # TODO Auction
+            msg += ["Property is going up for action."]
+            msg += ["(UNFINISHED)"]
+            self.interactive_cb = None
+        else:
+            msg += ["Not a valid command. Your options are: 'yes' and 'no'."]
+
+        if self.interactive_cb == None:
+            msg += [self._end_turn()]
+
+        return msg
+
+    def _mortgage_cb(self, cmd, args, subject):
+        msg = []
+        player = self.get_current_player()
+
+        if cmd == 'yes':
+            # TODO Check for houses
+
+            if subject.mortgaged:
+                subject.unmortgage()
+            else:
+                subject.mortgage()
+
+            msg += ["You have {}mortgaged {}.".format(
+                "" if subject.mortgaged else "un",
+                subject.name)]
+        elif cmd == 'no':
+            pass
+        else:
+            return ["Not a valid command. Your options are: 'yes' and 'no'."]
+
+        msg += ["It is {}'s turn (at {} with {}{}).".format(
+                player.nick,
+                self.board.tiles[player.position].name,
+                self.board.cursymbol,
+                player.balance)]
+
+        self.interactive_cb = None
+
+        return msg
 
     @staticmethod
     def from_savedata(savedata):
@@ -133,41 +203,37 @@ class Game(object):
 
         return msg
 
-    def _end_turn(self):
-        """Gives turn to next player (unless in debt), returns according message"""
-        self.current_player_id = (self.current_player_id + 1) % len(self.players)
-        # TODO Handle debt
-        # TODO on_turn of tile
-        return "Turn goes to {} (at {} with {}{}).".format(
-                self.get_current_player().nick,
-                self.board.tiles[self.get_current_player().position].name,
-                self.board.cursymbol,
-                self.get_current_player().balance)
-
-    def _purchase_cb(self, cmd, args):
-        """Callback handling property purchases"""
+    def mortgage(self, query):
+        """Attempt to manage the mortgage on a property"""
         msg = []
 
-        if cmd == 'yes':
-            current_player = self.get_current_player()
-            current_tile = self.board.tiles[current_player.position]
-            current_player.balance -= current_tile.price
-            current_player.properties += [current_tile]
-            current_tile.owner = current_player
-            msg += ["{} has been purchased, you have {}{} left.".format(
-                current_tile.name,
-                self.board.cursymbol,
-                current_player.balance)]
-            self.interactive_cb = None
-        elif cmd == 'no':
-            # TODO Auction
-            msg += ["Property is going up for action."]
-            msg += ["(UNFINISHED)"]
-            self.interactive_cb = None
-        else:
-            msg += ["Not a valid command. Your options are: 'yes' and 'no'."]
+        # Search for property in user's posession
+        found = False
+        for prop in self.get_current_player().properties:
+            if prop.name.lower().find(query.lower()) != -1:
+                if not found:
+                    found = True
+                    subject = prop
+                else:
+                    msg += ["{}: Multiple properties match, please be more "
+                    "specific.".format(self.get_current_player().nick)]
+                    return msg
 
-        if self.interactive_cb == None:
-            msg += [self._end_turn()]
+        if not found:
+            msg += ["{}: Could not find a matching property.".format(
+                self.get_current_player().nick)]
+            return msg
 
+        # Show mortgage/unmortgage choice
+        msg += ["{} is currently {}mortgaged.".format(
+            subject.name,
+            "" if subject.mortgaged else "not ")]
+        msg += ["Would you like to {}mortgage it for {}{}?".format(
+                    "un" if subject.mortgaged else "",
+                    self.board.cursymbol,
+                    subject.unmortgage_cost() if
+                    subject.mortgaged else
+                    subject.mortgage_value())]
+
+        self.interactive_cb = partial(self._mortgage_cb, subject=subject)
         return msg

@@ -3,17 +3,13 @@ from tile import *
 from monopoly import *
 
 class Board(object):
-    def __init__(self, players):
+    def __init__(self):
         self.tiles = []
-        self.players = {}
         self.cursymbol = "$"
 
-        for i in range(len(players)):
-            self.players[players[i]] = i
-
 class TestBoard(Board):
-    def __init__(self, players):
-        super(TestBoard, self).__init__(players)
+    def __init__(self):
+        super(TestBoard, self).__init__()
 
         purple = Monopoly("P", 50)
         light_blue = Monopoly("L", 50)
@@ -36,8 +32,8 @@ class TestBoard(Board):
         self.tiles.append(Jail())
 
 class USBoard(Board):
-    def __init__(self,players):
-        super(USBoard, self).__init__(players)
+    def __init__(self):
+        super(USBoard, self).__init__()
 
         purple = Monopoly("P", 50)
         light_blue = Monopoly("L", 50)

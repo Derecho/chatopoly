@@ -49,13 +49,16 @@ class Game(object):
         return [player.nick for player in self.players]
 
     def prepare_board(self, variant):
-        """Build and store board layout (after adding players!)"""
+        """Build and store board layout"""
         if self.board != None:
             return False
 
         # TODO Cleaner way. Maybe a dictionary that Boards add themselves to.
         if variant == 'us':
-            self.board = USBoard(self.players)
+            self.board = USBoard()
+            return True
+        elif variant == 'test':
+            self.board = TestBoard()
             return True
 
         return False
